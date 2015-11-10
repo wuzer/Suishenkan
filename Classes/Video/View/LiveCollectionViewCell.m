@@ -22,6 +22,7 @@
     self.tabViewController = [[LiveTableViewController alloc] init];
     
     [self.contentView addSubview:self.tabViewController.view];
+    NSLog(@"%@----cell",NSStringFromCGRect(self.bounds));
     
     return self;
 }

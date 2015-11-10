@@ -8,17 +8,19 @@
 
 #import "SegmentSwitch.h"
 #import "JFSegmentControl.h"
-
 #import "JFWaterFallView.h"
 #import "MenuView.h"
 #import "UpdownView.h"
 #import "LiveCollectionViewController.h"
+#import "LiveCollectionViewCell.h"
 
-@interface SegmentSwitch ()
+
+@interface SegmentSwitch () <UICollectionViewDataSource, UICollectionViewDelegate>
 
 @property (nonatomic, strong) LiveCollectionViewController *liveCollectionController;
 @property (nonatomic, strong) JFSegmentControl *segmentControl;
 @property (nonatomic, strong) JFWaterFallView *collectionView;
+@property (nonatomic, strong) UICollectionView *liveCollectionView;
 @property (nonatomic, strong) UIButton *clickUP;
 @property (nonatomic, strong) UpdownView *updownView;
 @property (nonatomic, strong) MenuView *menuView;
@@ -26,19 +28,22 @@
 
 @end
 
+static NSString *reuseID = @"liveCell";
 @implementation SegmentSwitch
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    [self.view addSubview:self.liveCollectionController.collectionView];
+//    [self.view addSubview:self.liveCollectionController.collectionView];
     [self.view addSubview:self.collectionView];
+    [self.view addSubview:self.liveCollectionView];
     [self.view addSubview:self.updownView];
     [self.view addSubview:self.menuView];
     self.automaticallyAdjustsScrollViewInsets = false;
 
     self.show = YES;
     [self NavSetup];
+
     
 }
 
@@ -82,10 +87,10 @@
     
     if (sender.selectedSegmentIndex == 0) {
         
-        self.liveCollectionController.view.hidden = NO;
+        self.liveCollectionView.hidden = NO;
         self.collectionView.hidden = YES;
     } else {
-        self.liveCollectionController.view.hidden = YES;
+        self.liveCollectionView.hidden = YES;
         self.collectionView.hidden = NO;
     }
 }
@@ -112,25 +117,27 @@
     NSLog(@"你点我啊");
     CGRect rect = self.updownView.frame;
     
+    __weak typeof(self) weakSelf = self;
     if (self.show == YES) {
         
         rect.origin.y = 30;
-        
         [UIView animateWithDuration:0.8 delay:0 options:0 animations:^{
-            self.updownView.frame = rect;
+            weakSelf.updownView.frame = rect;
             
         } completion:^(BOOL finished) {
-            self.show = NO;
+            weakSelf.show = NO;
+            weakSelf.updownView.hidden = NO;
         }];
     } else {
         
         rect.origin.y = - self.updownView.frame.size.height - 30;
         
         [UIView animateWithDuration:1 delay:0 options:0 animations:^{
-            self.updownView.frame = rect;
+            weakSelf.updownView.frame = rect;
             
         } completion:^(BOOL finished) {
-            self.show = YES;
+            weakSelf.show = YES;
+            weakSelf.updownView.hidden = YES;
         }];
     }
     
@@ -148,22 +155,69 @@
     return _updownView;
 }
 
+#pragma mark - DataSource
+
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+    return 10;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+    
+    LiveCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:reuseID forIndexPath:indexPath];
+    cell.backgroundColor = [UIColor colorWithRed:(arc4random_uniform(256) / 255.0) green:(arc4random_uniform(256) / 255.0) blue:(arc4random_uniform(256) / 255.0) alpha:0.9];
+    
+    return cell;
+}
+
+
 #pragma mark - 懒加载
 
-- (LiveCollectionViewController *)liveCollectionController {
-    
-    if (!_liveCollectionController) {
-        _liveCollectionController = [[LiveCollectionViewController alloc] init];
+//- (LiveCollectionViewController *)liveCollectionController {
+//    
+//    if (!_liveCollectionController) {
+//        _liveCollectionController = [[LiveCollectionViewController alloc] init];
+//        CGRect rect = self.view.frame;
+//        rect.origin.y += self.menuView.bounds.size.height;
+//        rect.size.height -= (44 + self.menuView.bounds.size.height);
+//        _liveCollectionController.collectionView.frame = rect;
+//        
+//        if (![self.childViewControllers containsObject:self.liveCollectionController]) {
+//            [self addChildViewController:self.liveCollectionController];
+//        }
+//    }
+//    return _liveCollectionController;
+//}
+
+- (UICollectionView *)liveCollectionView {
+
+    if (!_liveCollectionView) {
+        
         CGRect rect = self.view.frame;
         rect.origin.y += self.menuView.bounds.size.height;
-        rect.size.height -= (44 + self.menuView.bounds.size.height);
-        _liveCollectionController.collectionView.frame = rect;
+        rect.size.height -= (44 + 64 + self.menuView.bounds.size.height);
         
-        if (![self.childViewControllers containsObject:self.liveCollectionController]) {
-            [self addChildViewController:self.liveCollectionController];
-        }
+        UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
+        
+        _liveCollectionView = [[UICollectionView alloc] initWithFrame:rect collectionViewLayout:layout];
+        layout.itemSize = rect.size;
+        
+        [self setLiveViewWithLayout:layout];
+        
     }
-    return _liveCollectionController;
+    return _liveCollectionView;
+}
+
+- (void)setLiveViewWithLayout:(UICollectionViewFlowLayout *)layout {
+    
+    layout.minimumInteritemSpacing = 0;
+    layout.minimumLineSpacing = 0;
+    layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
+    
+    self.liveCollectionView.pagingEnabled = false;
+    self.liveCollectionView.showsHorizontalScrollIndicator = false;
+    
+    self.liveCollectionView.dataSource = self;
+    [self.liveCollectionView registerClass:[LiveCollectionViewCell class] forCellWithReuseIdentifier:reuseID];
 }
 
 

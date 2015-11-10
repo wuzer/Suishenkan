@@ -23,6 +23,8 @@ static NSString *reuseID = @"cell";
     self.automaticallyAdjustsScrollViewInsets = false;
     self.tableView.contentOffset = CGPointMake(0, 30);
     
+    NSLog(@"%@----tabview",NSStringFromCGRect(self.tableView.bounds));
+    
     [self.tableView registerClass:[VedioTableViewCell class] forCellReuseIdentifier:reuseID];
     }
 
@@ -58,8 +60,10 @@ static NSString *reuseID = @"cell";
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
     UIViewController *vc = [[UIViewController alloc] init];
+    vc.view.backgroundColor = [UIColor purpleColor];
+    vc.modalTransitionStyle = UIModalTransitionStyleFlipHorizontal;
     [self presentViewController:vc animated:YES completion:nil];
-    
+//    [self ];
     NSLog(@"%@",indexPath);
 }
 
