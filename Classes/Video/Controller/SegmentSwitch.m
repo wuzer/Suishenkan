@@ -8,21 +8,20 @@
 
 #import "SegmentSwitch.h"
 #import "JFSegmentControl.h"
-#import "JFTableView.h"
+
 #import "JFWaterFallView.h"
 #import "MenuView.h"
 #import "UpdownView.h"
-#import "ContainerViewController.h"
+#import "LiveCollectionViewController.h"
 
 @interface SegmentSwitch ()
 
+@property (nonatomic, strong) LiveCollectionViewController *liveCollectionController;
 @property (nonatomic, strong) JFSegmentControl *segmentControl;
-
-@property (nonatomic, strong) ContainerViewController *containerView;
-@property (nonatomic, strong) JFTableView *tableView;
 @property (nonatomic, strong) JFWaterFallView *collectionView;
 @property (nonatomic, strong) UIButton *clickUP;
 @property (nonatomic, strong) UpdownView *updownView;
+@property (nonatomic, strong) MenuView *menuView;
 @property (nonatomic, assign, getter=isShow) BOOL show;
 
 @end
@@ -32,27 +31,13 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    [self.view addSubview:self.containerView.collectionView];
+    [self.view addSubview:self.liveCollectionController.collectionView];
     [self.view addSubview:self.collectionView];
     [self.view addSubview:self.updownView];
-    
-    
-//    CGRect rect = self.tableView.frame;
-//    rect.origin.y = 30;
-//    self.tableView.frame = rect;
-//    self.automaticallyAdjustsScrollViewInsets = false;
-    // 菜单
-    MenuView *scrollView = [[MenuView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 30)];
+    [self.view addSubview:self.menuView];
+    self.automaticallyAdjustsScrollViewInsets = false;
+
     self.show = YES;
-    
-    // 添加控制器
-    self.containerView = [[ContainerViewController alloc] init] ;
-    if (![self.childViewControllers containsObject:self.containerView]) {
-        [self addChildViewController:self.containerView];
-    }
-    
-    
-    [self.view addSubview:scrollView];
     [self NavSetup];
     
 }
@@ -75,6 +60,7 @@
     
     UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"BookBtn_selected"] style:UIBarButtonItemStylePlain target:self action:@selector(bookChannel)];
     self.navigationItem.leftBarButtonItem = item;
+    self.automaticallyAdjustsScrollViewInsets = false;
 
 }
 
@@ -96,10 +82,10 @@
     
     if (sender.selectedSegmentIndex == 0) {
         
-        self.containerView.collectionView.hidden = NO;
+        self.liveCollectionController.view.hidden = NO;
         self.collectionView.hidden = YES;
     } else {
-        self.containerView.collectionView.hidden = YES;
+        self.liveCollectionController.view.hidden = YES;
         self.collectionView.hidden = NO;
     }
 }
@@ -162,19 +148,32 @@
     return _updownView;
 }
 
-
 #pragma mark - 懒加载
 
-- (JFTableView *)tableView {
+- (LiveCollectionViewController *)liveCollectionController {
     
-    if (!_tableView) {
-        _tableView = [[JFTableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain];
-        _tableView.frame = self.view.bounds;
+    if (!_liveCollectionController) {
+        _liveCollectionController = [[LiveCollectionViewController alloc] init];
+        CGRect rect = self.view.frame;
+        rect.origin.y += self.menuView.bounds.size.height;
+        rect.size.height -= (44 + self.menuView.bounds.size.height);
+        _liveCollectionController.collectionView.frame = rect;
+        
+        if (![self.childViewControllers containsObject:self.liveCollectionController]) {
+            [self addChildViewController:self.liveCollectionController];
+        }
     }
-    return _tableView;
+    return _liveCollectionController;
 }
 
 
+- (MenuView *)menuView {
+    
+    if (!_menuView) {
+        _menuView = [[MenuView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 30)];
+    }
+    return _menuView;
+}
 
 - (JFWaterFallView *)collectionView {
 
